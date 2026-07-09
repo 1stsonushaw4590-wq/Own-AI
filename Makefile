@@ -1,12 +1,61 @@
 # Cyber-LLM toolkit — Makefile
+# Run `make help` for available targets.
 PYTHON ?= python3
 VENV   ?= .venv
 MODEL  ?= Qwen/Qwen2.5-Coder-7B-Instruct
 OUT    ?= outputs/qwen25-coder-7b-cyber
+LLAMA_CPP ?= /opt/llama.cpp
 
-.PHONY: venv deps attack-index corpus dataset llama-index train eval \
+.PHONY: help venv deps attack-index corpus dataset llama-index train eval \
         sandbox-build serve-ollama serve-vllm chat streamlit test pipeline \
-        benchmark compose-up compose-down clean
+        benchmark benchmark-mock eval-mock gguf demo-real compose-up \
+        compose-down clean install-hooks
+
+help:
+	@echo "Cyber-LLM toolkit — available targets:"
+	@echo ""
+	@echo "  Setup:"
+	@echo "    make venv          Create Python virtualenv"
+	@echo "    make deps          Install all dependencies (CPU torch + RAG + UI)"
+	@echo "    make install-hooks Install pre-commit git hook"
+	@echo ""
+	@echo "  Data pipeline:"
+	@echo "    make data          Full pipeline: attack index + corpus + HF dataset + LlamaIndex"
+	@echo "    make attack-index  Download + index MITRE ATT&CK (858 techniques)"
+	@echo "    make corpus        Scrape NVD CVE / CWE / HF dataset -> cyber_train.jsonl"
+	@echo "    make dataset       Build HF datasets + torch Dataset from corpus"
+	@echo "    make llama-index   Build LlamaIndex retrieval store"
+	@echo ""
+	@echo "  Training (GPU host):"
+	@echo "    make train         PEFT QLoRA fine-tune (set MODEL=... OUT=...)"
+	@echo "    make gguf          Convert merged model -> GGUF Q4_K_M for Ollama"
+	@echo ""
+	@echo "  Eval:"
+	@echo "    make eval          CyberSecEval eval against merged model"
+	@echo "    make eval-mock     CyberSecEval eval with stub model (no GPU)"
+	@echo "    make demo-real     Run eval with Qwen2.5-Coder-0.5B on CPU"
+	@echo "    make benchmark     Benchmark all 3 models (Qwen/DeepSeek/Llama)"
+	@echo "    make benchmark-mock Benchmark with stub model (no GPU)"
+	@echo ""
+	@echo "  Inference:"
+	@echo "    make serve-ollama  Create Ollama model from merged dir"
+	@echo "    make serve-vllm    Serve via vLLM (OpenAI-compatible, GPU)"
+	@echo ""
+	@echo "  UIs:"
+	@echo "    make chat          Gradio chat UI (RAG + sandbox)"
+	@echo "    make streamlit     Streamlit chat UI (RAG + sandbox)"
+	@echo ""
+	@echo "  DevOps:"
+	@echo "    make test          Run pytest suite (13 tests)"
+	@echo "    make sandbox-build Build isolated Docker sandbox image"
+	@echo "    make compose-up    Start sandbox + Streamlit via Docker Compose"
+	@echo "    make compose-down  Stop Docker Compose stack"
+	@echo "    make clean         Remove generated data/outputs"
+	@echo ""
+	@echo "  Variables (override with KEY=VALUE):"
+	@echo "    MODEL=Qwen/Qwen2.5-Coder-7B-Instruct   (or deepseek-ai/deepseek-coder-6.7b-instruct)"
+	@echo "    OUT=outputs/qwen25-coder-7b-cyber"
+	@echo "    LLAMA_CPP=/opt/llama.cpp"
 
 venv:
 	$(PYTHON) -m venv $(VENV)
@@ -94,6 +143,12 @@ compose-up: sandbox-build
 
 compose-down:
 	docker compose -f docker/docker-compose.full.yml down
+
+install-hooks:
+	mkdir -p .git/hooks
+	cp .githooks/pre-commit .git/hooks/pre-commit
+	chmod +x .git/hooks/pre-commit
+	@echo "Pre-commit hook installed. It will run syntax checks + tests before each commit."
 
 clean:
 	rm -rf outputs data/rag data/hf_dataset data/llama_index data/attack/index.json
