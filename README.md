@@ -1,5 +1,7 @@
 # Cyber-LLM
 
+[![CI](https://github.com/1stsonushaw4590-wq/Own-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/1stsonushaw4590-wq/Own-AI/actions/workflows/ci.yml)
+
 Fine-tuning toolkit for cybersecurity language models. Train **Qwen2.5-Coder**, **DeepSeek-Coder**, and **Llama** into cybersecurity specialists using LoRA/QLoRA, retrieve grounded context with LlamaIndex, and serve locally via Ollama/vLLM — all with Docker-sandboxed code execution.
 
 ## Quick start
