@@ -1,0 +1,63 @@
+# Full local stack for cyber-llm.
+#
+# Profiles:
+#   ui        -> Streamlit chat UI (CPU ok; model load is slow without GPU)
+#   sandbox   -> builds the isolated code-exec sandbox image
+#   serve     -> vLLM OpenAI-compatible server (REQUIRES --gpu flag below)
+#
+# Usage:
+#   docker compose -f docker/docker-compose.full.yml --profile ui --profile sandbox up --build
+#   # with GPU serving:
+#   docker compose -f docker/docker-compose.full.yml --profile serve up --build --gpu
+#
+# The UI connects to a model dir mounted at ./outputs/<model>/merged.
+# For real GPU training use docker-compose.train.yml instead.
+
+services:
+  sandbox-build:
+    profile: ["sandbox"]
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.sandbox
+    image: cyber-llm-sandbox:latest
+    command: ["true"]
+
+  ui:
+    profile: ["ui"]
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ui
+    image: cyber-llm-ui:latest
+    ports:
+      - "8501:8501"
+    volumes:
+      - ..:/workspace
+      - ${HF_CACHE:-~/.cache/huggingface}:/root/.cache/huggingface
+    environment:
+      - STREAMLIT_MODEL=${MODEL_DIR:-/workspace/outputs/qwen25-coder-7b-cyber/merged}
+    command: >
+      streamlit run /workspace/scripts/chat_streamlit.py
+      --server.address=0.0.0.0 --server.port=8501
+      -- --model ${MODEL_DIR:-/workspace/outputs/qwen25-coder-7b-cyber/merged}
+    depends_on:
+      - sandbox-build
+
+  serve:
+    profile: ["serve"]
+    image: vllm/vllm-openai:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ${MODEL_DIR:-./outputs/qwen25-coder-7b-cyber/merged}:/model:ro
+    command: >
+      --model /model --dtype auto --tensor-parallel-size 1
+      --max-model-len 4096 --gpu-memory-utilization 0.9
+      --served-model-name cyber-llm
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    # Note: launch with  docker compose ... --profile serve up --gpu

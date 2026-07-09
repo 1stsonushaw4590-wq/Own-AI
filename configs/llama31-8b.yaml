@@ -1,0 +1,52 @@
+base_model: meta-llama/Llama-3.1-8B-Instruct
+model_type: AutoModelForCausalLM
+tokenizer_type: AutoTokenizer
+
+load_in_8bit: false
+load_in_4bit: true
+bf16: auto
+tf32: true
+
+adapter: lora
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+  - lm_head
+
+gradient_accumulation_steps: 4
+micro_batch_size: 2
+num_epochs: 3
+learning_rate: 0.0002
+optimizer: adamw_torch
+lr_scheduler: cosine
+warmup_ratio: 0.03
+
+datasets:
+  - path: data/processed/cyber_train.jsonl
+    type: alpaca
+    ds_type: json
+
+dataset_prepared_path: data/processed/prepared
+val_set_size: 0.05
+output_dir: ./outputs/llama31-8b-cyber
+
+sequence_len: 4096
+sample_packing: true
+pad_to_sequence_len: true
+
+gradient_checkpointing: true
+flash_attention: true
+
+special_tokens:
+  pad_token: <|endoftext|>
+
+wandb_project: cyber-llm
+wandb_name: llama31-8b-cyber-qlora

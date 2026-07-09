@@ -1,0 +1,22 @@
+# Core ML
+torch
+transformers
+accelerate
+bitsandbytes
+peft
+datasets
+huggingface_hub
+sentence-transformers
+
+# RAG
+llama-index
+llama-index-embeddings-huggingface
+faiss-cpu
+
+# Eval / UI
+gradio
+requests
+
+# Optional serving (installed on GPU host / via docker)
+# vllm
+# ollama (system package)

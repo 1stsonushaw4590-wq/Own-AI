@@ -1,0 +1,24 @@
+services:
+  train:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.train
+    image: cyber-llm-train:latest
+    volumes:
+      - ..:/workspace
+      - ${HF_CACHE:-~/.cache/huggingface}:/root/.cache/huggingface
+      - ${WANDB_DIR:-~/.cache/wandb}:/root/.cache/wandb
+    environment:
+      - WANDB_API_KEY=${WANDB_API_KEY:-}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    shm_size: 16gb
+    stdin_open: true
+    tty: true

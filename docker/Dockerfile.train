@@ -1,0 +1,24 @@
+FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+ENV PIP_NO_CACHE_DIR=1
+
+RUN apt-get update && apt-get install -y \
+    python3.10 python3.10-venv python3-pip git curl wget nano \
+    && rm -rf /var/lib/apt/lists/*
+
+# Use python3.10 as default python
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 \
+    && update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
+
+WORKDIR /workspace
+
+# Install Axolotl (bring-your-own CUDA build for 12.1)
+RUN pip install --upgrade pip
+RUN pip install "axolotl[flash-attn,deepspeed] @ git+https://github.com/axolotl-ai-cloud/axolotl@main" \
+    && pip install wandb huggingface_hub
+
+COPY . /workspace
+
+CMD ["bash"]

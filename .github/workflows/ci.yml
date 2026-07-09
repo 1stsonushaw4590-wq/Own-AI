@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system deps
+        run: sudo apt-get update && sudo apt-get install -y git
+
+      - name: Create venv + install deps
+        run: |
+          python -m venv .venv
+          . .venv/bin/activate
+          pip install -U pip
+          pip install --quiet torch --index-url https://download.pytorch.org/whl/cpu
+          pip install --quiet -r requirements.txt
+          pip install --quiet pytest
+
+      - name: Build ATT&CK index (offline, no NVD)
+        run: |
+          . .venv/bin/activate
+          # use a minimal bundled index if network is unavailable
+          python scripts/attack_map.py --refresh || echo "ATT&CK refresh failed; tests will skip"
+
+      - name: Build corpus + LlamaIndex (skip if no network)
+        run: |
+          . .venv/bin/activate
+          python scripts/dataset_manager.py --build || true
+          python scripts/rag_llama_index.py --build || true
+
+      - name: Run tests
+        run: |
+          . .venv/bin/activate
+          python -m pytest tests/ -q

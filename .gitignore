@@ -1,0 +1,19 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+wandb/
+
+# Generated data artifacts (rebuildable)
+data/hf_dataset/
+data/llama_index/
+data/rag/
+data/attack/index.json
+data/raw/*.tagged.jsonl
+
+# Training / model outputs
+outputs/
+
+# Editor / OS
+.DS_Store

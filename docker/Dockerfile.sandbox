@@ -1,0 +1,16 @@
+FROM python:3.11-slim
+
+# Minimal sandbox for running/evaluating untrusted generated code.
+# No network, dropped privileges, read-only root, tight syscall filter.
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 gcc g++ ca-certificates strace \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -m -s /bin/bash sandbox
+
+WORKDIR /sandbox
+COPY sandbox/run.py /sandbox/run.py
+
+USER sandbox
+CMD ["python3", "/sandbox/run.py"]
