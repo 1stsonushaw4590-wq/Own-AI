@@ -9,7 +9,7 @@ LLAMA_CPP ?= /opt/llama.cpp
 .PHONY: help venv deps attack-index corpus dataset llama-index train eval \
         sandbox-build serve-ollama serve-vllm chat streamlit test pipeline \
         benchmark benchmark-mock eval-mock gguf demo-real compose-up \
-        compose-down clean install-hooks
+        compose-down clean install-hooks status
 
 help:
 	@echo "Cyber-LLM toolkit — available targets:"
@@ -149,6 +149,9 @@ install-hooks:
 	cp .githooks/pre-commit .git/hooks/pre-commit
 	chmod +x .git/hooks/pre-commit
 	@echo "Pre-commit hook installed. It will run syntax checks + tests before each commit."
+
+status:
+	$(VENV)/bin/python scripts/pipeline.py status
 
 clean:
 	rm -rf outputs data/rag data/hf_dataset data/llama_index data/attack/index.json
