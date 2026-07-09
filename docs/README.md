@@ -257,6 +257,29 @@ For real results, train on a GPU host and pass `--model <merged>` instead.
 
 
 
+## 18. GGUF conversion for Ollama
+Convert a merged HF model into a quantized GGUF for local Ollama inference:
+```bash
+# requires llama.cpp cloned + built at /opt/llama.cpp (or set LLAMA_CPP)
+make gguf OUT=outputs/qwen25-coder-7b-cyber LLAMA_CPP=/opt/llama.cpp
+# or directly:
+python3 scripts/convert_gguf.py \
+    --model outputs/qwen25-coder-7b-cyber/merged \
+    --out outputs/qwen25-coder-7b-cyber/gguf \
+    --llama-cpp /opt/llama.cpp --quant Q4_K_M --ollama-name cyber-llm
+```
+`serve_ollama.sh` now also accepts a `.gguf` file directly.
+
+## 19. Real-model demo (CPU, no training)
+Prove the platform works with a **real LLM** on CPU — no GPU needed.
+Uses Qwen2.5-Coder-0.5B (tiny, ~1GB) to run the full eval harness.
+```bash
+make demo-real    # or: python3 scripts/eval.py --model Qwen/Qwen2.5-Coder-0.5B
+```
+This runs the CyberSecEval harness on CPU (slow but works). The 0.5B
+model naturally scores lower than a fine-tuned 7B model, but proves the
+entire pipeline: LLM → RAG retrieval → grounded generation → eval.
+
 ## Hardware notes
 - QLoRA (4-bit) lets you fine-tune 7–8B models on a single 24GB GPU
   (e.g. RTX 4090 / A10G / L4). For faster training use 2x A5000+ or A100.

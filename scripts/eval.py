@@ -117,7 +117,10 @@ def generate(model, prompt, max_new_tokens=512):
         model, torch_dtype="auto", device_map="auto"
     )
     messages = [{"role": "user", "content": prompt}]
-    inp = tok.apply_chat_template(messages, return_tensors="pt").to(mdl.device)
+    inp = tok.apply_chat_template(messages, return_tensors="pt")
+    if not isinstance(inp, torch.Tensor):
+        inp = tok(prompt, return_tensors="pt").input_ids
+    inp = inp.to(mdl.device)
     out = mdl.generate(inp, max_new_tokens=max_new_tokens, do_sample=False,
                        pad_token_id=tok.eos_token_id)
     return tok.decode(out[0][inp.shape[1]:], skip_special_tokens=True)

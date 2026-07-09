@@ -78,6 +78,17 @@ benchmark-mock:
 eval-mock:
 	$(VENV)/bin/python scripts/eval.py --mock --out outputs/eval_results.json
 
+# Convert a merged HF model -> quantized GGUF for Ollama (needs llama.cpp)
+gguf:
+	$(VENV)/bin/python scripts/convert_gguf.py \
+		--model $(OUT)/merged --out $(OUT)/gguf \
+		--llama-cpp ${LLAMA_CPP:-/opt/llama.cpp} --quant Q4_K_M
+
+# Prove the platform with a REAL tiny model on CPU (no GPU, no training)
+demo-real:
+	$(VENV)/bin/python scripts/eval.py \
+		--model Qwen/Qwen2.5-Coder-0.5B --out outputs/eval_real.json
+
 compose-up: sandbox-build
 	docker compose -f docker/docker-compose.full.yml --profile ui --profile sandbox up --build
 
