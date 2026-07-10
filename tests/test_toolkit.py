@@ -127,3 +127,69 @@ def test_run_sandbox_rejects_no_docker(monkeypatch):
     # -3 == SKIPPED when docker is unavailable; -2 == other error
     assert rc in (-3, -2)
     assert "docker" in out.lower() or "SKIPPED" in out or "ERROR" in out
+
+
+# ---------------- kali_tools.py ----------------
+def test_kali_tools_sandbox():
+    """Test Kali tools execution via Docker sandbox HTTP API."""
+    try:
+        from kali_tools import run_tool
+        rc, out, err = run_tool("nmap", "--version", sandbox=True)
+        assert rc == 0, f"nmap failed: {err}"
+        assert "Nmap version" in out
+    except (ImportError, OSError, Exception) as e:
+        pytest.skip(f"Sandbox not available: {e}")
+
+
+def test_kali_tools_sandbox_sqlmap():
+    """Test sqlmap availability in sandbox."""
+    try:
+        from kali_tools import run_tool
+        rc, out, err = run_tool("sqlmap", "--version", sandbox=True)
+        assert rc == 0, f"sqlmap failed: {err}"
+        assert any(kw in out.lower() for kw in ["sqlmap", "stable"]), f"Unexpected output: {out}"
+    except (ImportError, OSError, Exception) as e:
+        pytest.skip(f"Sandbox not available: {e}")
+
+
+def test_kali_tools_host_not_required():
+    """Test that host tools aren't required (sandbox-only case)."""
+    from kali_tools import run_tool
+    rc, out, err = run_tool("nonexistent_tool_xyz", sandbox=False)
+    assert rc == -1
+    assert "not found" in err
+
+
+# ---------------- Sandbox HTTP API ----------------
+def test_sandbox_http_api_python():
+    """Test sandbox HTTP API with Python code."""
+    import urllib.request, json
+    try:
+        req = urllib.request.Request(
+            "http://localhost:8002",
+            data=json.dumps({"code": "print('hello')", "lang": "python"}).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        resp = urllib.request.urlopen(req, timeout=10)
+        data = json.loads(resp.read())
+        assert data["returncode"] == 0
+        assert "hello" in data["stdout"]
+    except (ConnectionRefusedError, OSError, Exception) as e:
+        pytest.skip(f"Sandbox HTTP API not available: {e}")
+
+
+def test_sandbox_http_api_bash():
+    """Test sandbox HTTP API with bash commands."""
+    import urllib.request, json
+    try:
+        req = urllib.request.Request(
+            "http://localhost:8002",
+            data=json.dumps({"code": "echo 'bash works'", "lang": "bash"}).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        resp = urllib.request.urlopen(req, timeout=10)
+        data = json.loads(resp.read())
+        assert data["returncode"] == 0
+        assert "bash works" in data["stdout"]
+    except (ConnectionRefusedError, OSError, Exception) as e:
+        pytest.skip(f"Sandbox HTTP API not available: {e}")

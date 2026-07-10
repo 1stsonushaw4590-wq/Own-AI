@@ -1,5 +1,3 @@
-version: "3.8"
-
 networks:
   cyber-net:
     driver: bridge
@@ -216,6 +214,11 @@ services:
       dockerfile: ../docker/Dockerfile.sandbox
     container_name: cyber-sandbox
     image: cyber-llm-sandbox:latest
+    ports:
+      - "8002:8002"
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
     networks:
       - cyber-net
     restart: unless-stopped

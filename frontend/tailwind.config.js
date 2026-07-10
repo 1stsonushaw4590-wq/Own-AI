@@ -6,6 +6,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        surface: {
+          DEFAULT: '#111118',
+          2: '#1a1a24',
+        },
+        border: {
+          DEFAULT: '#2a2a3a',
+        },
         cyber: {
           50: '#f0fdf4',
           100: '#dcfce7',

@@ -90,13 +90,16 @@ def run_sandbox(code, timeout=20):
     with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as f:
         f.write(code)
         path = f.name
+    docker_cmd = _docker_prefix() + [
+        "run", "--rm", "--network", "none", "--read-only",
+        "--security-opt", "no-new-privileges", "--cap-drop", "ALL",
+        "--memory", "256m", "--cpus", "1.0",
+        "-v", f"{path}:/sandbox/code.py:ro",
+        "cyber-llm-sandbox:latest", "python3", "/sandbox/code.py",
+    ]
     try:
         proc = subprocess.run(
-            ["docker", "run", "--rm", "--network", "none", "--read-only",
-             "--security-opt", "no-new-privileges", "--cap-drop", "ALL",
-             "--memory", "256m", "--cpus", "1.0",
-             "-v", f"{path}:/sandbox/code.py:ro",
-             "cyber-llm-sandbox:latest", "python3", "/sandbox/code.py"],
+            docker_cmd,
             capture_output=True, text=True, timeout=timeout,
         )
         return proc.returncode, (proc.stdout + proc.stderr).strip()
@@ -106,6 +109,15 @@ def run_sandbox(code, timeout=20):
         return -2, str(e)
     finally:
         os.unlink(path)
+
+
+def _docker_prefix():
+    """Return ['sg', 'docker', '-c'] if user not in docker group, else []."""
+    try:
+        subprocess.run(["docker", "info"], capture_output=True, timeout=5, check=True)
+        return []
+    except Exception:
+        return ["sg", "docker", "-c"]
 
 
 def generate(model, prompt, max_new_tokens=512):
@@ -215,6 +227,15 @@ def shutil_docker_missing():
     try:
         subprocess.run(["docker", "info"], capture_output=True, timeout=10,
                        check=True)
+        return False
+    except Exception:
+        pass
+    # Fallback: try via sg (newgrp)
+    try:
+        subprocess.run(
+            ["sg", "docker", "-c", "docker info"],
+            capture_output=True, timeout=10, check=True
+        )
         return False
     except Exception:
         return True

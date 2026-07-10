@@ -16,6 +16,7 @@ Domains:
 import json
 import os
 import hashlib
+import argparse
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -1776,6 +1777,13 @@ def add_more_expert_content(builder):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--include-cve", default="data/cve_samples.jsonl",
+                        help="Path to CVE samples JSONL (default: data/cve_samples.jsonl)")
+    parser.add_argument("--include-tools", default="data/tool_samples.jsonl",
+                        help="Path to Kali tool samples JSONL (default: data/tool_samples.jsonl)")
+    args = parser.parse_args()
+
     builder = DatasetBuilder()
     attack_path = "data/attack/index.json"
     if os.path.exists(attack_path):
@@ -1818,6 +1826,32 @@ def main():
     print("\nAdding balanced expert content...")
     n = add_more_expert_content(builder)
     print(f"  → +{n} diverse samples")
+
+    if os.path.exists(args.include_cve):
+        print(f"\nLoading CVE data from {args.include_cve}...")
+        with open(args.include_cve) as f:
+            count = 0
+            for line in f:
+                cve = json.loads(line)
+                if "messages" in cve:
+                    inst = cve["messages"][0]["content"]
+                    out = cve["messages"][1]["content"]
+                else:
+                    inst = cve["instruction"]
+                    out = cve["output"]
+                builder.add(inst, out, cve["source"], cve["domain"])
+                count += 1
+        print(f"  → +{count} CVE samples")
+
+    if os.path.exists(args.include_tools):
+        print(f"\nLoading Kali tool data from {args.include_tools}...")
+        with open(args.include_tools) as f:
+            count = 0
+            for line in f:
+                s = json.loads(line)
+                builder.add(s["instruction"], s["output"], s["source"], s["domain"])
+                count += 1
+        print(f"  → +{count} Kali tool samples")
 
     builder.save()
 
