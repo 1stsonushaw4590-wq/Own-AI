@@ -227,7 +227,7 @@ def main():
 
     samples = []
     for name, gen_fn in SAMPLES:
-        if gen_fn.__name__ in existing:
+        if name.lower().replace(" ", "_") in existing or f"kali_{name.lower()}" in existing:
             print(f"Skipping {name} (already generated)")
             continue
         print(f"Generating {name} sample...")
