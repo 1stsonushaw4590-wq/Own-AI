@@ -24,7 +24,8 @@ EVAL = REPO / "scripts" / "eval.py"
 
 
 def run_eval(model_dir, out_path):
-    if not Path(model_dir).exists():
+    # HF Hub model IDs contain "/"; only require a local path to exist.
+    if "/" not in model_dir and not Path(model_dir).exists():
         return {"model": model_dir, "error": "merged model not found"}
     r = subprocess.run(
         [sys.executable, str(EVAL), "--model", model_dir, "--out", str(out_path)],
