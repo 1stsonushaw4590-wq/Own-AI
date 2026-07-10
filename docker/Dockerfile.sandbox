@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN useradd -m -s /bin/bash sandbox
 
 WORKDIR /sandbox
-COPY sandbox/run.py /sandbox/run.py
+COPY run.py /sandbox/run.py
 
 USER sandbox
 CMD ["python3", "/sandbox/run.py"]

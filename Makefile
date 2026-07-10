@@ -7,11 +7,11 @@ LLAMA_CPP ?= /opt/llama.cpp
 COMPOSE_FLAGS ?= --profile cpu
 
 .PHONY: help setup deps attack-index corpus dataset llama-index train eval \
-        sandbox-build serve-ollama serve-vllm chat streamlit test pipeline \
-        benchmark benchmark-mock eval-mock gguf demo-real compose-up \
-        compose-down clean install-hooks status docker-up docker-down \
-        docker-build api-build frontend-build dataset-build training-build \
-        train-docker merge quantize
+        sandbox-build chat streamlit test pipeline \
+        benchmark benchmark-mock eval-mock gguf demo-real \
+        clean install-hooks status docker-up docker-down \
+        docker-build train-docker merge quantize train-cpu train-colab \
+        api frontend inference monitoring
 
 help:
 	@echo "Cyber-LLM — Cyber Security Foundation Model"
@@ -164,7 +164,7 @@ monitoring:
 	docker compose --profile monitoring up -d prometheus grafana
 
 sandbox-build:
-	sg docker -c "docker build -t cyber-llm-sandbox:latest -f docker/Dockerfile.sandbox ."
+	docker build -t cyber-llm-sandbox:latest -f docker/Dockerfile.sandbox .
 
 # ─── Evaluation ────────────────────────────────────────────
 

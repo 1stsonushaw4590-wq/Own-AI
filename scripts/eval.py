@@ -96,7 +96,7 @@ def run_sandbox(code, timeout=20):
              "--security-opt", "no-new-privileges", "--cap-drop", "ALL",
              "--memory", "256m", "--cpus", "1.0",
              "-v", f"{path}:/sandbox/code.py:ro",
-             "cyber-llm-sandbox:latest", "/sandbox/code.py"],
+             "cyber-llm-sandbox:latest", "python3", "/sandbox/code.py"],
             capture_output=True, text=True, timeout=timeout,
         )
         return proc.returncode, (proc.stdout + proc.stderr).strip()
