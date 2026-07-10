@@ -1,0 +1,12 @@
+FROM /models/qwen25-coder-0.5b-cyber/gguf/cyber-llm-0.5b-q4_k_m.gguf
+TEMPLATE """{{- if .System }}
+<|im_start|>system
+{{ .System }}<|im_end|>
+{{- end }}
+<|im_start|>user
+{{ .Prompt }}<|im_end|>
+<|im_start|>assistant
+"""
+SYSTEM "You are a cybersecurity assistant for authorized security research and education."
+PARAMETER temperature 0.3
+PARAMETER top_p 0.9

@@ -1,0 +1,301 @@
+version: "3.8"
+
+networks:
+  cyber-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  qdrant_data:
+  minio_data:
+  model_cache:
+  dataset_cache:
+
+
+services:
+  # ─── Frontend ──────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cyber-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - api
+    networks:
+      - cyber-net
+    restart: unless-stopped
+
+  # ─── API Backend ───────────────────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cyber-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://cyber:cyber@postgres:5432/cyber
+      - REDIS_URL=redis://redis:6379/0
+      - QDRANT_URL=http://qdrant:6333
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=cyber
+      - MINIO_SECRET_KEY=cyber_secret
+      - INFERENCE_URL=http://inference:8001
+      - JWT_SECRET=change_me_in_production
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      qdrant:
+        condition: service_started
+    networks:
+      - cyber-net
+    restart: unless-stopped
+
+  # ─── vLLM Inference ───────────────────────────────────────
+  inference:
+    image: vllm/vllm-openai:latest
+    container_name: cyber-inference
+    ports:
+      - "8001:8001"
+    volumes:
+      - model_cache:/root/.cache/huggingface
+      - ./outputs:/models:ro
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN:-}
+      - CUDA_VISIBLE_DEVICES=0
+    command:
+      - --model
+      - /models/qwen25-coder-0.5b-cyber/merged
+      - --port
+      - "8001"
+      - --max-model-len
+      - "8192"
+      - --gpu-memory-utilization
+      - "0.90"
+      - --dtype
+      - "auto"
+      - --enforce-eager
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - cyber-net
+    restart: unless-stopped
+    profiles:
+      - gpu
+      - full
+
+  # ─── Ollama Inference (CPU fallback) ───────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: cyber-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - model_cache:/root/.ollama
+      - ./outputs:/models:ro
+      - ./docker/Modelfile:/Modelfile:ro
+    entrypoint: >
+      sh -c "
+        ollama serve &
+        sleep 3 &&
+        ollama create cyber-llm -f /Modelfile 2>/dev/null || true &&
+        wait
+      "
+    networks:
+      - cyber-net
+    restart: unless-stopped
+    profiles:
+      - cpu
+      - fallback
+
+  # ─── Vector Database ──────────────────────────────────────
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: cyber-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    networks:
+      - cyber-net
+    restart: unless-stopped
+
+  # ─── PostgreSQL ───────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: cyber-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=cyber
+      - POSTGRES_PASSWORD=cyber
+      - POSTGRES_DB=cyber
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cyber"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cyber-net
+    restart: unless-stopped
+
+  # ─── Redis ────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: cyber-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - cyber-net
+    restart: unless-stopped
+
+  # ─── MinIO Object Storage ─────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: cyber-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=cyber
+      - MINIO_ROOT_PASSWORD=cyber_secret
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - cyber-net
+    restart: unless-stopped
+
+  # ─── Celery Worker ────────────────────────────────────────
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cyber-worker
+    command: celery -A app.tasks worker --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://cyber:cyber@postgres:5432/cyber
+      - REDIS_URL=redis://redis:6379/0
+      - QDRANT_URL=http://qdrant:6333
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=cyber
+      - MINIO_SECRET_KEY=cyber_secret
+    depends_on:
+      - postgres
+      - redis
+      - qdrant
+    networks:
+      - cyber-net
+    restart: unless-stopped
+
+  # ─── Docker Sandbox ───────────────────────────────────────
+  sandbox:
+    build:
+      context: ./sandbox
+      dockerfile: ../docker/Dockerfile.sandbox
+    container_name: cyber-sandbox
+    image: cyber-llm-sandbox:latest
+    networks:
+      - cyber-net
+    restart: unless-stopped
+    profiles:
+      - sandbox
+      - full
+
+  # ─── Dataset Builder ──────────────────────────────────────
+  dataset-builder:
+    build:
+      context: ./dataset
+      dockerfile: Dockerfile
+    container_name: cyber-dataset
+    volumes:
+      - dataset_cache:/data
+      - ./data:/data/output
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+    networks:
+      - cyber-net
+    profiles:
+      - dataset
+      - full
+
+  # ─── Training ─────────────────────────────────────────────
+  training:
+    build:
+      context: ./training
+      dockerfile: Dockerfile
+    container_name: cyber-training
+    volumes:
+      - model_cache:/root/.cache/huggingface
+      - ./data:/data:ro
+      - ./outputs:/outputs
+      - ./configs:/configs:ro
+    environment:
+      - HF_TOKEN=${HF_TOKEN:-}
+      - WANDB_API_KEY=${WANDB_KEY:-}
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - cyber-net
+    profiles:
+      - training
+      - full
+
+  # ─── Monitoring ───────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: cyber-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - cyber-net
+    profiles:
+      - monitoring
+      - full
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: cyber-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=cyber
+    volumes:
+      - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./docker/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    networks:
+      - cyber-net
+    profiles:
+      - monitoring
+      - full

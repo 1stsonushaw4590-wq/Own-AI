@@ -79,7 +79,8 @@ def main():
     model = get_peft_model(model, lora)
     model.print_trainable_parameters()
 
-    ds = load_from_disk(args.dataset)["train"]
+    raw = load_from_disk(args.dataset)
+    ds = raw["train"] if isinstance(raw, dict) else raw
     tok_ds = ds.map(lambda e: tokenize(e, tokenizer, args.max_len),
                     remove_columns=ds.column_names, batched=False)
 

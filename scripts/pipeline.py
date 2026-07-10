@@ -137,7 +137,7 @@ def main():
 
     p = sub.add_parser("train", help="PEFT QLoRA fine-tune (GPU host)")
     p.add_argument("--model", default="Qwen/Qwen2.5-Coder-7B-Instruct")
-    p.add_argument("--output", default="outputs/qwen25-coder-7b-cyber")
+    p.add_argument("--output", default="outputs/qwen25-coder-0.5b-cyber")
     p.set_defaults(func=cmd_train)
 
     p = sub.add_parser("eval", help="CyberSecEval-style eval")

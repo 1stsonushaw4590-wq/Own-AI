@@ -1,0 +1,91 @@
+# Qwen2.5-Coder-7B-Instruct QLoRA fine-tuning config
+# Optimized for RTX 3060 12GB VRAM
+base_model: Qwen/Qwen2.5-Coder-7B-Instruct
+model_type: AutoModelForCausalLM
+tokenizer_type: AutoTokenizer
+
+# QLoRA 4-bit quantization
+load_in_8bit: false
+load_in_4bit: true
+strict: false
+
+# Dataset
+datasets:
+  - path: /data/cyber_train_chat.jsonl
+    type: chat_template
+    field_messages: messages
+    message_property_mappings:
+      role: role
+      content: content
+
+dataset_prepared_path: /outputs/dataset_prepared
+val_set_size: 0.05
+output_dir: /outputs
+
+# Sequence length
+sequence_len: 2048
+sample_packing: false
+
+# LoRA configuration
+adapter: lora
+lora_model_dir:
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target_linear: true
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+
+# 4-bit quantization
+bnb_config:
+  load_in_4bit: true
+  bnb_4bit_compute_dtype: bfloat16
+  bnb_4bit_use_double_quant: true
+  bnb_4bit_quant_type: nf4
+
+# Training
+wandb_mode: disabled  # set to "online" if using W&B
+gradient_checkpointing: true
+gradient_checkpointing_kwargs:
+  use_reentrant: false
+
+micro_batch_size: 1
+gradient_accumulation_steps: 8
+num_epochs: 3
+optimizer: paged_adamw_8bit
+lr_scheduler: cosine
+learning_rate: 2.0e-4
+warmup_ratio: 0.03
+
+bf16: auto
+tf32: true
+fp16: false
+
+max_grad_norm: 0.3
+
+# Saving
+save_steps: 500
+save_total_limit: 3
+eval_steps: 500
+eval_batch_size: 1
+
+# Logging
+logging_steps: 10
+
+# Evals
+evals_per_epoch: 1
+eval_table_size:
+eval_max_new_tokens: 256
+
+# DeepSpeed
+deepspeed:
+
+# Special tokens
+special_tokens:
+  pad_token: "<|endoftext|>"

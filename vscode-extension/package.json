@@ -1,0 +1,128 @@
+{
+  "name": "cyber-llm",
+  "displayName": "Cyber-LLM Security Assistant",
+  "description": "AI-powered cybersecurity assistant for VS Code. Code review, vulnerability detection, secure coding, and threat intelligence.",
+  "version": "1.0.0",
+  "publisher": "cyber-llm",
+  "license": "MIT",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Security",
+    "Programming Languages",
+    "Linters",
+    "Other"
+  ],
+  "keywords": [
+    "security",
+    "cybersecurity",
+    "code review",
+    "vulnerability",
+    "CVE",
+    "secure coding",
+    "threat intelligence"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onLanguage:python",
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:cpp",
+    "onLanguage:c",
+    "onLanguage:rust",
+    "onLanguage:go",
+    "onLanguage:java",
+    "onLanguage:php",
+    "onLanguage:bash",
+    "onLanguage:sql"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "cyber-llm.analyzeFile",
+        "title": "Cyber-LLM: Analyze File for Vulnerabilities"
+      },
+      {
+        "command": "cyber-llm.analyzeSelection",
+        "title": "Cyber-LLM: Analyze Selected Code"
+      },
+      {
+        "command": "cyber-llm.fixVulnerability",
+        "title": "Cyber-LLM: Suggest Fix"
+      },
+      {
+        "command": "cyber-llm.explainCode",
+        "title": "Cyber-LLM: Explain Code"
+      },
+      {
+        "command": "cyber-llm.generateSecureCode",
+        "title": "Cyber-LLM: Generate Secure Code"
+      },
+      {
+        "command": "cyber-llm.lookupCVE",
+        "title": "Cyber-LLM: Lookup CVE"
+      },
+      {
+        "command": "cyber-llm.chat",
+        "title": "Cyber-LLM: Open Security Chat"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "cyber-llm.analyzeSelection",
+        "key": "ctrl+shift+s",
+        "mac": "cmd+shift+s"
+      },
+      {
+        "command": "cyber-llm.fixVulnerability",
+        "key": "ctrl+shift+f",
+        "mac": "cmd+shift+f"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "cyber-llm.analyzeSelection",
+          "group": "cyber-llm@1"
+        },
+        {
+          "command": "cyber-llm.explainCode",
+          "group": "cyber-llm@2"
+        },
+        {
+          "command": "cyber-llm.fixVulnerability",
+          "group": "cyber-llm@3"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Cyber-LLM",
+      "properties": {
+        "cyber-llm.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "Cyber-LLM API server URL"
+        },
+        "cyber-llm.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for authentication"
+        },
+        "cyber-llm.enableDiagnostics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time diagnostics (requires API)"
+        },
+        "cyber-llm.model": {
+          "type": "string",
+          "default": "cyber-llm",
+          "enum": ["cyber-llm", "qwen-coder"],
+          "description": "Model to use for analysis"
+        }
+      }
+    }
+  }
+}

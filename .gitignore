@@ -11,9 +11,13 @@ data/llama_index/
 data/rag/
 data/attack/index.json
 data/raw/*.tagged.jsonl
+data/cyber_train.jsonl
+data/cyber_train_chat.jsonl
+data/processed/cyber_train.jsonl
 
 # Training / model outputs
 outputs/
 
 # Editor / OS
 .DS_Store
+.env
