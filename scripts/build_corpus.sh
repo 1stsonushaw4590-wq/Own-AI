@@ -11,8 +11,8 @@ python3 scripts/scrape_dataset.py --out data/raw/cyber_scraped.jsonl \
     --cve-limit "${CVE_LIMIT:-150}" --cwe-limit "${CWE_LIMIT:-80}" \
     --hf-limit "${HF_LIMIT:-150}"
 
-echo "==> Merging all raw data"
-cat data/raw/*.jsonl > data/processed/cyber_train.jsonl
+echo "==> Merging all raw data (including Kali tool samples)"
+cat data/raw/*.jsonl data/tool_samples.jsonl > data/processed/cyber_train.jsonl
 
 echo "==> Validating prepared dataset"
 python3 - <<'PY'

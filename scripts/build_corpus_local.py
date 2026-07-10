@@ -88,6 +88,26 @@ add("Write a Python function to validate JWT tokens securely.", "", "import jwt\
 add("Explain memory safety vulnerabilities in C/C++.", "", "Common types: buffer overflow (stack/heap), use-after-free, double-free, null pointer dereference, uninitialized memory, format string bugs. Mitigations: ASLR, DEP/NX, stack canaries, SafeInt, smart pointers, address sanitizers (ASan/MSan). Use memory-safe languages when possible.")
 add("How do I implement network segmentation?", "", "1. VLANs for different trust levels\n2. Firewall rules between segments\n3. DMZ for public-facing services\n4. Micro-segmentation with software-defined networking\n5. Zero-trust network access (ZTNA)\n6. Monitor east-west traffic\n7. Implement 802.1X for device authentication\n8. Regular penetration testing of boundaries")
 
+# Kali tool samples (real tool output from the Docker sandbox)
+TOOL_SAMPLES = Path("data/tool_samples.jsonl")
+if TOOL_SAMPLES.exists():
+    with open(TOOL_SAMPLES) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            o = json.loads(line)
+            rec = {
+                "instruction": o.get("instruction", "").strip(),
+                "input": o.get("input", "").strip(),
+                "output": o.get("output", "").strip(),
+            }
+            if o.get("source"):
+                rec["source"] = o["source"]
+            if o.get("domain"):
+                rec["domain"] = o["domain"]
+            S.append(rec)
+
 # Write out
 with open(OUT, 'w') as f:
     for s in S:
