@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "note": "OpenAI-style function-calling specs for local Kali tool wrappers. The 'command' field is the CLI template; {param} is filled from the model's arguments. All commands run under a sandbox with --network none unless 'network' is true, and are subject to the scope guardrail (see agent/schema/scope_guardrail.md).",
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "nmap_scan",
+        "description": "Network discovery and service/version detection against an in-scope target. Use for authorized recon only.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "target": {"type": "string", "description": "IP or hostname within authorized scope"},
+            "ports": {"type": "string", "description": "Port spec, e.g. '1-1000', '80,443,8080', or 'top1000'"},
+            "scan_type": {"type": "string", "enum": ["syn", "connect", "service"], "description": "syn=-sS (needs raw sock/CAP_NET_RAW), connect=-sT, service=-sV"},
+            "network": {"type": "boolean", "default": false, "description": "true only if target is explicitly authorized for network access"}
+          },
+          "required": ["target"]
+        },
+        "command": "nmap -{scan_type_flag} -p {ports} -oX - {target}",
+        "timeout_sec": 300,
+        "scope_guardrail": true
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "nikto_scan",
+        "description": "Web server vulnerability scanner. Use for authorized web-app targets only.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "host": {"type": "string", "description": "Target URL/IP within authorized scope"},
+            "ssl": {"type": "boolean", "default": false, "description": "Use HTTPS"},
+            "network": {"type": "boolean", "default": false, "description": "true only if target is explicitly authorized for network access"}
+          },
+          "required": ["host"]
+        },
+        "command": "nikto -h {host}{ssl_flag} -o -Format json",
+        "timeout_sec": 600,
+        "scope_guardrail": true
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "semgrep_scan",
+        "description": "Static analysis (SAST) of a local source tree for security bugs. Runs on local code you own.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "path": {"type": "string", "description": "Local directory or file to scan"},
+            "config": {"type": "string", "default": "auto", "description": "Semgrep rule set, e.g. 'p/default' or 'r/java'"}
+          },
+          "required": ["path"]
+        },
+        "command": "semgrep scan --config {config} --json --output - {path}",
+        "timeout_sec": 300,
+        "scope_guardrail": false,
+        "network": false
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "nuclei_scan",
+        "description": "Template-based vulnerability scanner for known web exposures. Use for authorized targets only.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "target": {"type": "string", "description": "URL/host within authorized scope"},
+            "templates": {"type": "string", "default": "technologies", "description": "Nuclei template group, e.g. 'technologies', 'cves', 'exposures'"},
+            "network": {"type": "boolean", "default": false, "description": "true only if target is explicitly authorized for network access"}
+          },
+          "required": ["target"]
+        },
+        "command": "nuclei -u {target} -t {templates} -oJ -",
+        "timeout_sec": 600,
+        "scope_guardrail": true
+      }
+    }
+  ]
+}

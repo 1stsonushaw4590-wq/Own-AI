@@ -910,6 +910,200 @@ class DatasetBuilder:
         for s in samples:
             self.add(s["instruction"], s["output"], s["source"], s["domain"])
 
+    def add_language_expertise(self):
+        """Broaden the model's proficiency across modern (and legacy) programming
+        languages with idiomatic reference snippets that demonstrate each
+        language's syntax, type system, and standard idioms."""
+        samples = [
+            # --- Systems / low-level ---
+            {"instruction": "Show a concise array-sum example in modern Fortran.",
+             "output": "```fortran\nprogram sum_arr\n  integer :: xs(5) = [1, 2, 3, 4, 5]\n  integer :: total\n  total = sum(xs)          ! intrinsic array ops\n  print *, total           ! 15\nend program sum_arr\n```\nModern Fortran favors intrinsic array operations (`sum`, `matmul`) over hand-written loops.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show Ada's strong typing with a record and procedure.",
+             "output": "```ada\nprocedure Main is\n   type Point is record\n      X, Y : Float;\n   end record;\n   P : Point := (3.0, 4.0);\nbegin\n   P.X := P.X + 1.0;\nend Main;\n```\nAda enforces strong static typing and record aggregates, catching shape errors at compile time.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a D template and range-based example.",
+             "output": "```d\nimport std.stdio;\n\nT maxVal(T)(T[] xs) {\n    T m = xs[0];\n    foreach (x; xs) if (x > m) m = x;\n    return m;\n}\n\nvoid main() { writeln(maxVal([3, 7, 2])); }\n```\nD supports template generics and `foreach` ranges; `@safe` can enforce memory safety.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show Nim syntax with a proc and sequence.",
+             "output": "```nim\nproc greet(name: string): string =\n  \"Hello, \" & name\n\nlet nums = @[1, 2, 3]\nfor n in nums:\n  echo greet($\"num {n}\")\n```\nNim blends Python-like syntax with static typing and metaprogramming via templates/macros.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show an Odin procedure and struct.",
+             "output": "```odin\npackage main\nimport \"core:fmt\"\n\nVec2 :: struct { x, y: f32 }\n\nlength :: proc(v: Vec2) -> f32 {\n    return sqrt(v.x * v.x + v.y * v.y)\n}\n```\nOdin is a systems language focused on simplicity and explicitness, with `::` for declarations.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a Carbon function and struct.",
+             "output": "```carbon\npackage Sample api;\n\nstruct Point {\n  var x: i32;\n  var y: i32;\n}\n\nfn distance(p: Point) -> f64 {\n  return sqrt(f64(p.x * p.x + p.y * p.y));\n}\n```\nCarbon (Google's experimental successor to C++) emphasizes modern generics and memory safety by default.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show Swift optionals and a struct.",
+             "output": "```swift\nstruct Point { var x: Int; var y: Int }\n\nlet p = Point(x: 3, y: 4)\nif let px = Optional(p.x) {\n    print(px)\n}\n```\nSwift uses value types (`struct`) and `Optional` to make absence of a value explicit in the type system.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show an Objective-C interface and implementation.",
+             "output": "```objc\n@interface Greeter : NSObject\n- (void)greet:(NSString *)name;\n@end\n\n@implementation Greeter\n- (void)greet:(NSString *)name { NSLog(@\"Hello, %@\", name); }\n@end\n```\nObjective-C pairs interfaces/implementations and uses message passing (`[obj method:arg]`); ARC manages memory.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            # --- Application / general-purpose ---
+            {"instruction": "Show idiomatic Python with dataclasses and a generator.",
+             "output": "```python\nfrom dataclasses import dataclass\n\n@dataclass\nclass Point:\n    x: int\n    y: int\n\ndef evens(n):\n    for i in range(n):\n        if i % 2 == 0:\n            yield i\n\nprint([p for p in [Point(1,2), Point(3,4)]])\nprint(list(evens(5)))\n```\nPython favors dataclasses for data containers and generators for lazy iteration.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show modern JavaScript with arrow functions and async/await.",
+             "output": "```javascript\nconst double = xs => xs.map(x => x * 2);\n\nasync function loadUser(id) {\n  const res = await fetch(`/users/${id}`);\n  return res.json();\n}\n\nconsole.log(double([1, 2, 3]));\n```\nModern JS uses arrow functions, `async/await` for promises, and template literals for interpolation.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a TypeScript generic function.",
+             "output": "```typescript\nfunction first<T>(xs: T[]): T | undefined {\n  return xs[0];\n}\n\nconst n = first<number>([1, 2, 3]);\nconst s = first<string>(['a', 'b']);\n```\nTypeScript adds static generics and structural typing on top of JavaScript.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a Kotlin data class and extension function.",
+             "output": "```kotlin\ndata class User(val id: Int, val name: String)\n\nfun User.greet(): String = \"Hi ${name.trim()}\"\n\nfun main() = println(User(1, \"Ada\").greet())\n```\nKotlin data classes auto-generate `equals`/`hashCode`/`toString`, and extension functions add methods without inheritance.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a Dart class with named constructors.",
+             "output": "```dart\nclass Point {\n  final int x, y;\n  Point(this.x, this.y);\n  Point.zero() : x = 0, y = 0;\n}\n\nvoid main() => print(Point.zero().x);\n```\nDart uses sound null safety and named constructors for expressive object creation.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show Ruby blocks and a class.",
+             "output": "```ruby\nclass Counter\n  def initialize = @n = 0\n  def inc = @n += 1\nend\n\nc = Counter.new\n3.times { c.inc }\nputs c.instance_variable_get(:@n)\n```\nRuby blocks/closures and concise method definitions (`def x = ...`) keep code expressive.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a PHP class with typed properties.",
+             "output": "```php\n<?php\nclass Point {\n    public function __construct(\n        public int $x, public int $y) {}\n}\n\n$p = new Point(1, 2);\necho $p->x;\n```\nModern PHP supports typed properties and constructor promotion for concise classes.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a Perl subroutine and array processing.",
+             "output": "```perl\nuse strict;\nuse warnings;\n\nsub total {\n    my @xs = @_;\n    my $s = 0; $s += $_ for @xs;\n    return $s;\n}\n\nprint total(1, 2, 3), \"\\n\";\n```\nPerl uses `my` lexicals and `strict`/`warnings` for safer, clearer code.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a Lua table and function.",
+             "output": "```lua\nlocal function greet(name)\n  return \"Hello, \" .. name\nend\n\nlocal person = { name = \"Ada\", age = 36 }\nprint(greet(person.name))\n```\nLua's `table` is the universal data structure; `..` is string concatenation.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a Scala case class and pattern match.",
+             "output": "```scala\ncase class Point(x: Int, y: Int)\n\ndef describe(p: Point): String = p match {\n  case Point(0, 0) => \"origin\"\n  case Point(_, 0) => \"on x-axis\"\n  case _          => \"elsewhere\"\n}\n```\nScala case classes are immutable value objects; pattern matching is exhaustive.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a Groovy closure and class.",
+             "output": "```groovy\nclass Point {\n    int x, y\n    String label() { \"($x, $y)\" }\n}\n\ndef make = { x, y -> new Point(x: x, y: y) }\nprintln make(1, 2).label()\n```\nGroovy adds closures and `GString` interpolation to the JVM, with concise property access.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            # --- Functional ---
+            {"instruction": "Show a Haskell higher-order function.",
+             "output": "```haskell\nimport Data.List (sort)\n\ntopTwo :: Ord a => [a] -> [a]\ntopTwo = take 2 . reverse . sort\n\nmain :: IO ()\nmain = print (topTwo [3,1,2])\n```\nHaskell composes functions with `.`; purity and strong typing guide design.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show an Erlang function and list comprehension.",
+             "output": "```erlang\n-module(demo).\n-export([big/1]).\n\nbig(Xs) -> [X || X <- Xs, X > 10].\n```\nErlang uses lightweight processes and pattern matching; list comprehensions filter declaratively.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show Elixir pipe operator and pattern match.",
+             "output": "```elixir\ndefmodule Demo do\n  def big(xs), do: xs |> Enum.filter(&(&1 > 10)) |> Enum.sort()\nend\n\nDemo.big([3, 12, 7, 20]) |> IO.inspect()\n```\nElixir's `|>` pipe threads data through functions; immutability is the default.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show OCaml variant and pattern match.",
+             "output": "```ocaml\ntype shape = Circle of float | Rect of float * float\n\nlet area = function\n  | Circle r -> 3.14 *. r *. r\n  | Rect (w, h) -> w *. h\n```\nOCaml variants model algebraic data types; `function` does pattern matching on the argument.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show F# discriminated union and pattern match.",
+             "output": "```fsharp\ntype Shape =\n  | Circle of float\n  | Rect of float * float\n\nlet area = function\n  | Circle r -> 3.14 * r * r\n  | Rect (w, h) -> w * h\n```\nF# discriminated unions and pattern matching express domain models concisely on .NET.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show Clojure sequence operations.",
+             "output": "```clojure\n(defn big [xs]\n  (->> xs (filter #(> % 10)) (sort) (take 2)))\n\n(println (big [3 12 7 20]))\n```\nClojure is a Lisp on the JVM with immutable persistent data structures and thread-last `->>`.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show an Elm type and function.",
+             "output": "```elm\ntype Shape = Circle Float | Rect Float Float\n\narea : Shape -> Float\narea s =\n    case s of\n        Circle r -> 3.14 * r * r\n        Rect w h -> w * h\n```\nElm is a pure functional language for front-ends; the compiler guarantees no runtime exceptions.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a Racket recursive function.",
+             "output": "```racket\n#lang racket\n(define (sum xs)\n  (if (null? xs) 0 (+ (car xs) (sum (cdr xs)))))\n\n(sum '(1 2 3))\n```\nRacket is a Scheme dialect; recursion and first-class functions are central.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a Common Lisp function.",
+             "output": "```lisp\n(defun sum (xs)\n  (if (null xs) 0 (+ (car xs) (sum (cdr xs)))))\n\n(sum '(1 2 3))\n```\nCommon Lisp uses prefix S-expressions; `defun` defines functions and `car`/`cdr` destructure lists.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            # --- Scripting / shell ---
+            {"instruction": "Show a Bash function and loop.",
+             "output": "```bash\n#!/usr/bin/env bash\ntotal=0\nfor n in \"$@\"; do\n  total=$((total + n))\ndone\necho \"sum=$total\"\n```\nBash scripts use `$(( ))` for arithmetic and quote expansions (`\"$@\"`) to preserve arguments.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a PowerShell function.",
+             "output": "```powershell\nfunction Total {\n    param([int[]]$Numbers)\n    ($Numbers | Measure-Object -Sum).Sum\n}\n\nTotal 1 2 3\n```\nPowerShell cmdlets use Verb-Noun naming and pipe objects (not text) between commands.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show an AWK program.",
+             "output": "```awk\nBEGIN { sum = 0 }\n{ sum += $1 }\nEND { print \"sum=\" sum }\n```\nAWK processes text line-by-line with field variables (`$1`, `$2`) and `BEGIN`/`END` blocks.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a Tcl proc.",
+             "output": "```tcl\nproc total {nums} {\n    set s 0\n    foreach n $nums { set s [expr {$s + $n}] }\n    return $s\n}\nputs [total {1 2 3}]\n```\nTcl treats everything as strings/commands; `expr` evaluates arithmetic inside `{ }`.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            # --- Scientific / data ---
+            {"instruction": "Show an R function and vector operation.",
+             "output": "```r\nbig <- function(xs) {\n  sort(xs[xs > 10])[1:2]\n}\nbig(c(3, 12, 7, 20))\n```\nR is vectorized: operations apply element-wise and logical indexing filters in one step.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show Julia multiple dispatch.",
+             "output": "```julia\narea(::Type{Circle}, r::Float64) = 3.14 * r^2\narea(::Type{Rect}, w::Float64, h::Float64) = w * h\n\nprintln(area(Circle, 2.0))\n```\nJulia specializes methods by argument types at compile time (multiple dispatch) for high performance.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show MATLAB vectorization.",
+             "output": "```matlab\nfunction y = big(x)\n    y = sort(x(x > 10), 'descend');\nend\n```\nMATLAB is matrix-oriented; vectorized expressions avoid explicit loops and run efficiently.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a SAS DATA step.",
+             "output": "```sas\ndata work.big;\n  set work.input;\n  if value > 10 then output;\nrun;\n```\nSAS processes datasets row-by-row in DATA steps; `if ... then output` filters records.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            # --- Web-specific ---
+            {"instruction": "Show a semantic HTML form with CSS.",
+             "output": "```html\n<form>\n  <label for=\"name\">Name</label>\n  <input id=\"name\" name=\"name\" type=\"text\" required>\n  <button type=\"submit\">Send</button>\n</form>\n<style>\n  input:focus { border-color: #06c; }\n</style>\n```\nHTML provides semantic structure; CSS scopes presentation via selectors and pseudo-classes.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a SQL JOIN query.",
+             "output": "```sql\nSELECT u.name, o.total\nFROM users AS u\nJOIN orders AS o ON o.user_id = u.id\nWHERE o.total > 100\nORDER BY o.total DESC;\n```\nSQL expresses set operations declaratively; `JOIN` combines tables on a key relation.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a WebAssembly text format (WAT) function.",
+             "output": "```wat\n(func $add (param $a i32) (param $b i32) (result i32)\n  local.get $a\n  local.get $b\n  i32.add)\n```\nWebAssembly (WAT) is a low-level compilation target with a stack-based instruction set and typed locals.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            # --- Hardware description ---
+            {"instruction": "Show a simple Verilog module.",
+             "output": "```verilog\nmodule adder(input [3:0] a, b, output [4:0] y);\n  assign y = a + b;\nendmodule\n```\nVerilog describes hardware structurally; `assign` is continuous combinational logic.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a VHDL entity and architecture.",
+             "output": "```vhdl\nentity adder is\n  port (a, b : in  bit_vector(3 downto 0);\n        y     : out bit_vector(4 downto 0));\nend adder;\n\narchitecture rtl of adder is\nbegin\n  y <= ('0' & a) + ('0' & b);\nend rtl;\n```\nVHDL is strongly typed; entities declare ports and architectures define behavior.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a CUDA kernel.",
+             "output": "```cuda\n__global__ void add(int *a, int *b, int n) {\n  int i = blockIdx.x * blockDim.x + threadIdx.x;\n  if (i < n) b[i] = a[i] + 1;\n}\n```\nCUDA launches massively parallel kernels across GPU threads; `blockIdx`/`threadIdx` compute the global index.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            # --- Legacy ---
+            {"instruction": "Show a COBOL PROCEDURE DIVISION snippet.",
+             "output": "```cobol\nIDENTIFICATION DIVISION.\nPROGRAM-ID. HELLO.\nPROCEDURE DIVISION.\n    DISPLAY \"HELLO, WORLD\".\n    STOP RUN.\n```\nCOBOL is division/paragraph based with English-like syntax, common in legacy mainframe systems.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a Pascal program.",
+             "output": "```pascal\nprogram Hello;\nvar i: integer;\nbegin\n  for i := 1 to 3 do writeln(i);\nend.\n```\nPascal emphasizes structured programming with explicit type and variable declarations.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a BASIC subroutine.",
+             "output": "```basic\n10 SUB total(a, b)\n20   PRINT a + b\n30 END SUB\n40 CALL total(2, 3)\n```\nBASIC is beginner-friendly with line numbers and simple `SUB`/`CALL` structure.",
+             "source": "language_expertise", "domain": "programming_languages"},
+            {"instruction": "Show a Lisp function (legacy dialect).",
+             "output": "```lisp\n(DEFUN SQUARE (X) (* X X))\n(PRINT (SQUARE 5))\n```\nClassic Lisp uses prefix notation and `DEFUN` to bind functions; parentheses denote lists/calls.",
+             "source": "language_expertise", "domain": "programming_languages"},
+        ]
+        for s in samples:
+            self.add(s["instruction"], s["output"], s["source"], s["domain"])
+
+    def add_systems_perf_expertise(self):
+        """Performance-critical, systems-programming expertise for C, C++, C#,
+        Assembly, and UNIX, plus Rust/Go as 'other languages'. Calibrated
+        toward low-level, cache/branch/SIMD-aware implementation details."""
+        samples = [
+            {"instruction": "Show a performance-critical C example using AVX2 SIMD to sum floats.",
+             "output": "```c\n#include <immintrin.h>\n#include <stddef.h>\n\nfloat sum_avx2(const float *restrict a, size_t n) {\n    __m256 acc = _mm256_setzero_ps();\n    size_t i = 0;\n    for (; i + 8 <= n; i += 8)            // 8 floats per 256-bit lane\n        acc = _mm256_add_ps(acc, _mm256_loadu_ps(&a[i]));\n    float tail = 0.0f;                     // handle remainder scalar\n    for (; i < n; i++) tail += a[i];\n    __m128 lo = _mm256_castps256_ps128(acc);\n    __m128 hi = _mm256_extractf128_ps(acc, 1);\n    lo = _mm_add_ps(lo, hi);\n    lo = _mm_hadd_ps(lo, lo); lo = _mm_hadd_ps(lo, lo);\n    return _mm_cvtss_f32(lo) + tail;\n}\n```\nKeep the hot loop branchless and aligned (`_mm256_load_ps` for 32-byte-aligned buffers), handle the scalar remainder outside the vectorized loop, and avoid `restrict`-violating aliasing.",
+             "source": "systems_perf_expertise", "domain": "systems_programming"},
+            {"instruction": "Show a cache-friendly, move-aware C++ example.",
+             "output": "```cpp\n#include <vector>\n#include <string>\n\nstd::vector<std::string> build(size_t n) {\n    std::vector<std::string> v;\n    v.reserve(n);                 // one allocation, no reallocation churn\n    for (size_t i = 0; i < n; ++i)\n        v.emplace_back(std::to_string(i));  // construct in place (no copy)\n    return v;                     // NRVO / move, no deep copy\n}\n```\nReserve up front to avoid amortized reallocations, prefer `emplace_back` over `push_back(copy)`, and rely on move semantics so returning the vector is O(1). Keep data contiguous for cache locality.",
+             "source": "systems_perf_expertise", "domain": "systems_programming"},
+            {"instruction": "Show a lock-free single-producer/single-consumer ring buffer in C++.",
+             "output": "```cpp\n#include <atomic>\n#include <vector>\n\ntemplate <typename T>\nstruct SPSC {\n    std::vector<T> buf; size_t cap;\n    std::atomic<size_t> head{0}, tail{0};   // single writer / single reader\n    bool push(const T& x) {\n        size_t h = head.load(std::memory_order_relaxed);\n        if (h - tail.load(std::memory_order_acquire) == cap) return false;\n        buf[h & (cap-1)] = x; h++; head.store(h, std::memory_order_release); return true;\n    }\n};\n```\nWith one producer and one consumer, `head`/`tail` are accessed by different threads, so no CAS is needed — plain atomic loads/stores with acquire/release ordering avoid locks and false sharing. Size the capacity to a power of two for a cheap mask.",
+             "source": "systems_perf_expertise", "domain": "systems_programming"},
+            {"instruction": "Show performance-critical C# using Span<T> and stackalloc.",
+             "output": "```csharp\nusing System;\nusing System.Buffers;\n\nint Sum(ReadOnlySpan<int> s) {\n    int total = 0;\n    foreach (var x in s) total += x;     // no allocation, no bounds checks in hot path\n    return total;\n}\n\nvoid Work() {\n    Span<int> buf = stackalloc int[64];   // stack, zero GC pressure\n    // ... fill buf ...\n    _ = Sum(buf);\n}\n```\n`Span<T>`/`stackalloc` keep hot buffers on the stack and avoid LOH/GC churn; `ReadOnlySpan` enables slicing without copying. For larger buffers, rent from `ArrayPool<T>.Shared` and return it.",
+             "source": "systems_perf_expertise", "domain": "systems_programming"},
+            {"instruction": "Show a performance-critical C# example using System.Numerics SIMD.",
+             "output": "```csharp\nusing System.Numerics;\n\nVector<float> Add(Vector<float> a, Vector<float> b) => a + b;  // 8 floats/op on AVX2\n\nfloat Sum(Vector<float> v) => Vector.Dot(v, Vector<float>.One);\n```\n`System.Numerics.Vector<T>` maps to the widest SIMD ISA available (AVX2/AVX-512) at runtime; operate on `Vector<T>` in chunks of `Vector<float>.Count` to keep the pipeline full. Fall back to scalar for the remainder.",
+             "source": "systems_perf_expertise", "domain": "systems_programming"},
+            {"instruction": "Show an x86-64 AVX2 assembly loop that adds two float arrays.",
+             "output": "```nasm\n; rdi = a, rsi = b, rdx = n (multiple of 8), rcx = out\n.loop:\n    vmovups  ymm0, [rdi]\n    vaddps   ymm0, ymm0, [rsi]\n    vmovups  [rcx], ymm0\n    add      rdi, 32\n    add      rsi, 32\n    add      rcx, 32\n    sub      rdx, 8\n    jnz      .loop\n    vzeroupper\n```\nProcess 8 floats (32 bytes) per iteration with `vmovups`/`vaddps`; keep pointers 32-byte aligned for `vmovaps`. Call `vzeroupper` after to avoid AVX/SSE transition penalties.",
+             "source": "systems_perf_expertise", "domain": "systems_programming"},
+            {"instruction": "Show a performance-critical UNIX epoll event loop in C.",
+             "output": "```c\n#include <sys/epoll.h>\n#include <unistd.h>\n\nint run(int listen_fd) {\n    int ep = epoll_create1(0);\n    struct epoll_event ev, evs[64];\n    ev.events = EPOLLIN; ev.data.fd = listen_fd;\n    epoll_ctl(ep, EPOLL_CTL_ADD, listen_fd, &ev);\n    for (;;) {\n        int n = epoll_wait(ep, evs, 64, -1);   // single syscall, no busy poll\n        for (int i = 0; i < n; i++) handle(evs[i].data.fd);\n    }\n}\n```\nUse `epoll` (level-/edge-triggered) instead of `select`/`poll` for O(1) wakeups; set sockets non-blocking (`O_NONBLOCK`) so a handler never blocks the loop. Batch events and avoid allocations in the hot path.",
+             "source": "systems_perf_expertise", "domain": "systems_programming"},
+            {"instruction": "Show a UNIX fork/exec with pipes in C for tool orchestration.",
+             "output": "```c\n#include <unistd.h>\n#include <sys/wait.h>\n\nint run(const char *cmd, char *const argv[], char *out, size_t cap) {\n    int p[2]; pipe(p);\n    pid_t pid = fork();\n    if (pid == 0) { dup2(p[1], 1); close(p[0]); close(p[1]); execvp(cmd, argv); _exit(127); }\n    close(p[1]);\n    size_t n = read(p[0], out, cap - 1); out[n] = 0; close(p[0]);\n    int st; waitpid(pid, &st, 0);\n    return st;\n}\n```\n`fork()`+`execvp()` gives an isolated child with full process isolation; wire stdout through a `pipe()` and `read` with a bounded `cap` to avoid overruns. Always `waitpid` to reap zombies and capture the exit status.",
+             "source": "systems_perf_expertise", "domain": "systems_programming"},
+            {"instruction": "Show a performance-critical Rust example (zero-copy iteration).",
+             "output": "```rust\npub fn sum(xs: &[f32]) -> f32 {\n    xs.iter().fold(0.0, |a, &b| a + b)   // compiled to tight SIMD loop, no bounds checks\n}\n\npub fn map_in_place(buf: &mut [u8]) {\n    for b in buf.iter_mut() { *b = b.wrapping_add(1); }  // borrows, no allocation\n}\n```\nRust iterators compile to branchless, bounds-check-elided loops; `&mut [T]` enables in-place mutation with no copies. Prefer slices over `Vec` when ownership isn't needed to avoid moves.",
+             "source": "systems_perf_expertise", "domain": "systems_programming"},
+            {"instruction": "Show a performance-critical Go example with sync.Pool and goroutines.",
+             "output": "```go\npackage main\n\nimport (\"sync\")\n\nvar pool = sync.Pool{New: func() any { b := make([]byte, 1024); return &b }}\n\nfunc work() {\n    buf := pool.Get().(*[]byte)\n    defer pool.Put(buf)\n    // reuse *buf; avoids per-call heap allocation / GC pressure\n}\n```\nReuse buffers via `sync.Pool` to cut allocations; spawn goroutines for concurrent work but bound parallelism with a worker pool/semaphore to avoid oversubscription. Keep hot structs on the stack when possible.",
+             "source": "systems_perf_expertise", "domain": "systems_programming"},
+        ]
+        for s in samples:
+            self.add(s["instruction"], s["output"], s["source"], s["domain"])
+
     def build_chat_format(self) -> List[Dict]:
         chat_samples = []
         for s in self.samples:
@@ -1822,6 +2016,12 @@ def main():
     print(f"  → windows_ad: +{1}")
     builder.add_linux_security()
     print(f"  → linux_security: +{1}")
+    _before = len(builder.samples)
+    builder.add_language_expertise()
+    print(f"  → language_expertise: +{len(builder.samples) - _before}")
+    _before2 = len(builder.samples)
+    builder.add_systems_perf_expertise()
+    print(f"  → systems_perf_expertise: +{len(builder.samples) - _before2}")
 
     print("\nAdding balanced expert content...")
     n = add_more_expert_content(builder)
