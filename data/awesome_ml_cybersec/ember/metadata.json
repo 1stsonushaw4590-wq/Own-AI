@@ -1,0 +1,9 @@
+{
+  "name": "ember",
+  "source": "https://github.com/endgameinc/ember",
+  "description": "PE malware static analysis dataset (1M+ samples)",
+  "type": "malware_analysis",
+  "size_gb": 4.5,
+  "priority": "high",
+  "status": "metadata_only"
+}

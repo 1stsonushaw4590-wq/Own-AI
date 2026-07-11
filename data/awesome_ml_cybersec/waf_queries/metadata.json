@@ -1,0 +1,9 @@
+{
+  "name": "waf_queries",
+  "source": "https://github.com/faizann24/Fwaf-Machine-Learning-driven-Web-Application-Firewall",
+  "description": "WAF malicious query dataset",
+  "type": "web_attacks",
+  "size_gb": 0.5,
+  "priority": "high",
+  "status": "metadata_only"
+}

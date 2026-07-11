@@ -1,0 +1,9 @@
+{
+  "name": "aktaion",
+  "source": "https://github.com/jzadeh/Aktaion/tree/master/data",
+  "description": "Aktaion behavioral malware datasets",
+  "type": "malware_analysis",
+  "size_gb": 1.0,
+  "priority": "medium",
+  "status": "metadata_only"
+}

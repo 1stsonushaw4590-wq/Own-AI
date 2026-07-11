@@ -1,0 +1,9 @@
+{
+  "name": "web_attack_payloads",
+  "source": "https://github.com/lcatro/WebShell-Detect-By-Machine-Learning",
+  "description": "WebShell detection dataset",
+  "type": "web_attacks",
+  "size_gb": 0.2,
+  "priority": "medium",
+  "status": "metadata_only"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "bodmas",
+  "source": "https://whyisyoung.github.io/BODMAS/",
+  "description": "BODMAS PE malware dataset (47K samples)",
+  "type": "malware_analysis",
+  "size_gb": 10.0,
+  "priority": "high",
+  "status": "metadata_only"
+}

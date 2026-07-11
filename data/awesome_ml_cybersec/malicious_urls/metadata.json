@@ -1,0 +1,9 @@
+{
+  "name": "malicious_urls",
+  "source": "http://sysnet.ucsd.edu/projects/url/",
+  "description": "Malicious URLs dataset (2M+ URLs)",
+  "type": "web_attacks",
+  "size_gb": 1.0,
+  "priority": "high",
+  "status": "metadata_only"
+}

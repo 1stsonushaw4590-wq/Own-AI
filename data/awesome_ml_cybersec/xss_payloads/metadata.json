@@ -1,0 +1,9 @@
+{
+  "name": "xss_payloads",
+  "source": "https://github.com/foospidy/payloads",
+  "description": "XSS payloads collection",
+  "type": "web_attacks",
+  "size_gb": 0.1,
+  "priority": "medium",
+  "status": "metadata_only"
+}

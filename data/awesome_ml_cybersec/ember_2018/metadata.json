@@ -1,0 +1,9 @@
+{
+  "name": "ember_2018",
+  "source": "https://github.com/endgameinc/ember/tree/master/ember2018",
+  "description": "Updated EMBER dataset",
+  "type": "malware_analysis",
+  "size_gb": 4.5,
+  "priority": "high",
+  "status": "metadata_only"
+}

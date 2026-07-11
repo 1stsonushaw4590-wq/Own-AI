@@ -1,0 +1,9 @@
+{
+  "name": "stratosphere",
+  "source": "https://stratosphereips.org/category/dataset.html",
+  "description": "Stratosphere IPS labeled network traffic",
+  "type": "network_forensics",
+  "size_gb": 10.0,
+  "priority": "medium",
+  "status": "metadata_only"
+}

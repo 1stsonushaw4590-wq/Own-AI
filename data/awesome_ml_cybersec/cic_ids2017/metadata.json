@@ -1,0 +1,9 @@
+{
+  "name": "cic_ids2017",
+  "source": "https://www.unb.ca/cic/datasets/ids-2017.html",
+  "description": "CIC-IDS2017 network intrusion dataset (2.8M flows)",
+  "type": "network_intrusion",
+  "size_gb": 8.0,
+  "priority": "high",
+  "status": "metadata_only"
+}

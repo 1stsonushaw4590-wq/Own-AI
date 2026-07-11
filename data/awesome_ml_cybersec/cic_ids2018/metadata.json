@@ -1,0 +1,9 @@
+{
+  "name": "cic_ids2018",
+  "source": "https://www.unb.ca/cic/datasets/ids-2018.html",
+  "description": "CIC-IDS2018 updated intrusion dataset",
+  "type": "network_intrusion",
+  "size_gb": 12.0,
+  "priority": "medium",
+  "status": "metadata_only"
+}

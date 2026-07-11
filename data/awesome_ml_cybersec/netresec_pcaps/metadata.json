@@ -1,0 +1,9 @@
+{
+  "name": "netresec_pcaps",
+  "source": "http://www.netresec.com/?page=PcapFiles",
+  "description": "Public PCAP files for forensics",
+  "type": "network_forensics",
+  "size_gb": 50.0,
+  "priority": "low",
+  "status": "metadata_only"
+}

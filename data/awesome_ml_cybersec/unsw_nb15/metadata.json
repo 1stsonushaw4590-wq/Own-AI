@@ -1,0 +1,9 @@
+{
+  "name": "unsw_nb15",
+  "source": "https://research.unsw.edu.au/projects/unsw-nb15-dataset",
+  "description": "UNSW-NB15 hybrid network intrusion dataset",
+  "type": "network_intrusion",
+  "size_gb": 5.0,
+  "priority": "high",
+  "status": "metadata_only"
+}

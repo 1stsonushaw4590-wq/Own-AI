@@ -1,0 +1,9 @@
+{
+  "name": "drebin",
+  "source": "https://www.sec.cs.tu-bs.de/~danarp/drebin/",
+  "description": "Android malware dataset (120K+ samples)",
+  "type": "malware_analysis",
+  "size_gb": 2.0,
+  "priority": "high",
+  "status": "metadata_only"
+}

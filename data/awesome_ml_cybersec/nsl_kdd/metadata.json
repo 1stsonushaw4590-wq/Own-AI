@@ -1,0 +1,9 @@
+{
+  "name": "nsl_kdd",
+  "source": "https://github.com/defcom17/NSL_KDD",
+  "description": "NSL-KDD improved KDD Cup 99 dataset",
+  "type": "network_intrusion",
+  "size_gb": 0.5,
+  "priority": "medium",
+  "status": "metadata_only"
+}

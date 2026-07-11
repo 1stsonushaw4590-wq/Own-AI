@@ -1,0 +1,9 @@
+{
+  "name": "kddcup99",
+  "source": "http://kdd.ics.uci.edu/databases/kddcup99/kddcup99.html",
+  "description": "Classic KDD Cup 99 intrusion detection",
+  "type": "network_intrusion",
+  "size_gb": 2.0,
+  "priority": "low",
+  "status": "metadata_only"
+}

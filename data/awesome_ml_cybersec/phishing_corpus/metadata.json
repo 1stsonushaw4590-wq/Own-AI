@@ -1,0 +1,9 @@
+{
+  "name": "phishing_corpus",
+  "source": "https://monkey.org/~jose/phishing/",
+  "description": "PhishingCorpus dataset",
+  "type": "phishing",
+  "size_gb": 0.5,
+  "priority": "high",
+  "status": "metadata_only"
+}

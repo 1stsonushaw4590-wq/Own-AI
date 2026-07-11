@@ -1,0 +1,9 @@
+{
+  "name": "trec_spam",
+  "source": "https://plg.uwaterloo.ca/~gvcormac/treccorpus07/",
+  "description": "TREC 2007 spam corpus",
+  "type": "phishing",
+  "size_gb": 4.0,
+  "priority": "medium",
+  "status": "metadata_only"
+}

@@ -1,0 +1,9 @@
+{
+  "name": "awid",
+  "source": "http://icsdweb.aegean.gr/awid/",
+  "description": "Aegean Wireless Intrusion Dataset (AWID)",
+  "type": "wireless",
+  "size_gb": 3.0,
+  "priority": "medium",
+  "status": "metadata_only"
+}
