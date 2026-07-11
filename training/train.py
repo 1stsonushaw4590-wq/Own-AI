@@ -32,7 +32,7 @@ from peft import (
     prepare_model_for_kbit_training,
     PeftModel,
 )
-from trl import SFTTrainer, DataCollatorForCompletionOnlyLM
+from trl import SFTTrainer
 
 
 MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-Coder-7B-Instruct")
@@ -75,10 +75,10 @@ TRAINING_CONFIG = {
     "gradient_checkpointing_kwargs": {"use_reentrant": False},
     "optim": "paged_adamw_8bit",
     "max_grad_norm": 0.3,
-    "max_seq_length": 2048,
-    "packing": False,
     "report_to": "wandb" if USE_WANDB else "none",
 }
+
+MAX_SEQ_LENGTH = 2048
 
 
 def setup_model_and_tokenizer():
@@ -91,7 +91,7 @@ def setup_model_and_tokenizer():
     )
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right"
-    tokenizer.model_max_length = TRAINING_CONFIG["max_seq_length"]
+    tokenizer.model_max_length = MAX_SEQ_LENGTH
 
     print(f"Loading model: {MODEL_NAME} with 4-bit QLoRA")
     bnb_config = BitsAndBytesConfig(**QLORA_CONFIG)
@@ -145,7 +145,7 @@ def train():
         tokenizer=tokenizer,
         args=TrainingArguments(**TRAINING_CONFIG),
         train_dataset=dataset,
-        max_seq_length=TRAINING_CONFIG["max_seq_length"],
+        max_seq_length=MAX_SEQ_LENGTH,
         dataset_text_field="text",
         packing=False,
     )
@@ -166,6 +166,7 @@ def train():
         "lora": LORA_CONFIG,
         "training": {k: v for k, v in TRAINING_CONFIG.items()
                      if k not in ("report_to",)},
+        "max_seq_length": MAX_SEQ_LENGTH,
         "dataset": DATASET_PATH,
     }
     with open(f"{OUTPUT_DIR}/training_config.json", "w") as f:
