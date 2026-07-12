@@ -97,12 +97,39 @@ def load_and_prepare_dataset(tokenizer):
     print(f"Dataset size: {len(dataset)} samples")
 
     def format_chat(example):
-        messages = example["messages"]
-        text = tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=False,
-        )
+        # Handle both formats: messages format and instruction/output format
+        if "messages" in example:
+            messages = example["messages"]
+        elif "instruction" in example and "output" in example:
+            messages = [
+                {"role": "user", "content": example["instruction"]},
+                {"role": "assistant", "content": example["output"]}
+            ]
+        else:
+            # Fallback: use first two fields
+            keys = list(example.keys())
+            if len(keys) >= 2:
+                messages = [
+                    {"role": "user", "content": str(example[keys[0]])},
+                    {"role": "assistant", "content": str(example[keys[1]])}
+                ]
+            else:
+                messages = [{"role": "user", "content": str(example)}]
+        
+        # Debug: check messages
+        print(f"DEBUG: messages = {messages}")
+        if not messages or len(messages) == 0:
+            return {"text": ""}
+        
+        try:
+            text = tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=False,
+            )
+        except Exception as e:
+            # Fallback: simple concatenation
+            text = f"User: {messages[0].get('content', '')}\nAssistant: {messages[1].get('content', '')}"
         return {"text": text}
 
     dataset = dataset.map(format_chat, remove_columns=dataset.column_names)

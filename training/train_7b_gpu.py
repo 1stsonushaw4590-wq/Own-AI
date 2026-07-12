@@ -181,9 +181,6 @@ def format_chat(example):
 
 def load_and_prepare_dataset(tokenizer):
     """Load and tokenize the training dataset."""
-    global tokenizer
-    tokenizer = tokenizer  # Make tokenizer available for format_chat
-
     print(f"Loading dataset from {DATASET_PATH}")
     dataset = load_dataset("json", data_files=DATASET_PATH, split="train")
 
